@@ -9,6 +9,6 @@ data:
         server_name _;
 
         location / {
-            proxy_pass http://django:8000;
+            proxy_pass http://chatapp-backend:8000;
         }
     }

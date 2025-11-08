@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: django
+  name: chatapp-backend
 spec:
   replicas: 2
   minReadySeconds: 10
   selector:
     matchLabels:
-      app: django
+      app: chatapp-backend
   template:
     metadata:
       labels:
-        app: django
+        app: chatapp-backend
     spec:
       initContainers:
         - name: wait-for-mysql

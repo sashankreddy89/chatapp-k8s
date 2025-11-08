@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: django
+  name: chatapp-backend
 spec:
   type: ClusterIP
   selector:
