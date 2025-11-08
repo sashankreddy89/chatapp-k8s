@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: django
+spec:
+  replicas: 2
+  minReadySeconds: 10
+  selector:
+    matchLabels:
+      app: django
+  template:
+    metadata:
+      labels:
+        app: django
+    spec:
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              "until nslookup stateful-db-0.mysql-headless.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done",
+            ]
+
+      containers:
+        - name: django
+          image: sashankreddy97/chatapp-backend:v1
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8000
+              name: django-port
+          livenessProbe:
+            tcpSocket:
+              port: django-port
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 7
+            failureThreshold: 2
+          readinessProbe:
+            tcpSocket:
+              port: django-port
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 2
+          env:
+            - name: DB_HOST
+              value: mysql-headless
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap-db
+                  key: MYSQL_DATABASE
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: configmap-db
+                  key: MYSQL_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: MYSQL_PASSWORD
