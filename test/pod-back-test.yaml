@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: django
+  labels:
+    app.kubernetes.io/name: django
+spec:
+  containers:
+    - name: django
+      image: sashankreddy97/chatapp-backend:v1
+      resources:
+        limits:
+          memory: "512Mi"
+          cpu: "500m"
+        requests:
+          memory: "256Mi"
+          cpu: "250m"
+      ports:
+        - containerPort: 8000
+      env:
+        - name: DB_HOST
+          value: mysql-headless
+        - name: DB_PORT
+          value: "3306"
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: configmap-db
+              key: MYSQL_DATABASE
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              key: MYSQL_USER
+              name: configmap-db
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: MYSQL_PASSWORD
