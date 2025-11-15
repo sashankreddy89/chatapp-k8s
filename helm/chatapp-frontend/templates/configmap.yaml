@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chatapp-frontend.fullname" . }}-cm
+data:
+  config.conf: |
+    {{- .Values.cm.config | nindent 4 }}

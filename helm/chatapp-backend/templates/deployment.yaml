@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chatapp-backend.fullname" . }}-deployment
+spec:
+  replicas: {{ .Values.deploy.replicas}}
+  minReadySeconds: {{ .Values.minReadySeconds | default 5 }}
+  selector:
+    matchLabels:
+      {{- include "chatapp-backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "chatapp-backend.labels" . | nindent 8 }}
+    spec:
+      initContainers:
+        - name: wait-for-mysql
+          image: busybox
+          command:
+            [
+              "sh",
+              "-c",
+              {{ .Values.deploy.initCmd | quote }}
+            ]
+
+      containers:
+        - name: django
+          image: sashankreddy97/chatapp-backend:v1
+          resources:
+            requests:
+              memory: {{ .Values.deploy.requests.memory | quote}}
+              cpu: {{ .Values.deploy.requests.cpu | quote}}
+            limits:
+              memory: {{ .Values.deploy.limits.memory | quote}}
+              cpu: {{ .Values.deploy.limits.cpu | quote}}
+          ports:
+            - containerPort: {{ .Values.service.targetPort | default 8000 }}
+              name: {{ .Values.deploy.ports.name | default "django-port" }}
+
+          {{- if .Values.deploy.livenessProbe.enabled }}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.deploy.ports.name | default "django-port" }}
+            initialDelaySeconds: {{ .Values.deploy.livenessProbe.initialDelaySeconds | default 30 }}
+            periodSeconds: {{ .Values.deploy.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.deploy.livenessProbe.timeoutSeconds | default 7 }}
+            failureThreshold: {{ .Values.deploy.livenessProbe.failureThreshold | default 2 }}
+          {{- end }}
+          
+          {{- if .Values.deploy.readinessProbe.enabled }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.deploy.ports.name | default "django-port" }}
+            initialDelaySeconds: {{ .Values.deploy.readinessProbe.initialDelaySeconds | default 20 }}
+            periodSeconds: {{ .Values.deploy.readinessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.deploy.readinessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ .Values.deploy.readinessProbe.failureThreshold | default 2 }}
+          {{- end }}
+          env:
+            - name: DB_HOST
+              value: {{ .Values.cm.DB_HOST | quote }}
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "chatapp-backend.fullname" . }}-env
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "chatapp-backend.fullname" . }}-env
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "chatapp-backend.fullname" . }}-env
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chatapp-backend.fullname" . }}-sec
+                  key: MYSQL_PASSWORD

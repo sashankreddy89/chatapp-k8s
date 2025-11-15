@@ -1,0 +1,18 @@
+cm:
+  config: |
+    server {
+        listen 80;
+        server_name _;
+
+        location / {
+            proxy_pass http://chatapp-backend-svc:8000;
+        }
+    }
+
+svc:
+  type: NodePort
+  port: 80
+  targetPort: 80
+  nodePort: 30080
+
+replicaCount: 1

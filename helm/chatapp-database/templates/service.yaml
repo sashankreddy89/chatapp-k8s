@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ default (printf "%s" (include "my.fullname" .)) .Values.service.name }}-headless
+  labels:
+    {{- include "my.labels" . | nindent 4 }}
+spec:
+  ports:
+    - port: {{ .Values.service.port | default 3306 }}
+      targetPort: {{ .Values.service.targetPort | default 3306 }}
+  clusterIP: None
+  selector:
+    {{- include "my.selectorLabels"  . | nindent 4 }}

@@ -1,0 +1,40 @@
+cm:
+  DB_PORT: ""
+  DB_NAME: ""
+  DB_USER: ""
+  DB_HOST: "chatapp-db-sts-0.chatapp-db-headless.helm.svc.cluster.local"
+
+secret:
+  MYSQL_PASSWORD: "chatappu"
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+  nodeport: 30080
+
+deploy:
+  replicas: 2
+  minReadySeconds: 10
+  initCmd: "until nslookup chatapp-db-sts-0.chatapp-db-headless.$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace).svc.cluster.local; do echo waiting for myservice; sleep 2; done"
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+  ports:
+    containerPort: 8000
+    name: django-port
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 7
+    failureThreshold: 2
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 2

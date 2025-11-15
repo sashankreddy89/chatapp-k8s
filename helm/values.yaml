@@ -1,0 +1,38 @@
+cm:
+  name: "chatapp-database-cm"
+  user: ""
+  database: ""
+
+secret:
+  name: ""
+  mysqlRootPassword: "chatappr"
+  mysqlPassword: "chatappu"
+
+service:
+  name: ""
+
+port:
+  internal: 3306
+  targetPortNo: 3306
+  targetPortName: mysql-port
+
+sts:
+  replicaCount: 1
+  image:
+    repository: "mysql"
+    tag: "8.0"
+    pullPolicy: "IfNotPresent"
+
+  livenessProbe:
+    present: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    present: true
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
